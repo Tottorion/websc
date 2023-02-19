@@ -8,21 +8,34 @@ const result = axios(URL)
   .then(response => {
     const html = response.data;
     const $ = cheerio.load(html);
+    return $
 
-    $('p.price').eq(0).each((x, y) => {
-      const place = $(y).text().replace(/(\r\n|\n|\r|)/gm, '').trim();
-      console.log('金額：', place);
+    // 値段プロパティー用
+    const priceList = [];
+    $('p.price strong').eq(0).each((x, y) => {
+      priceList.push($(y).text().replace(/(\r\n|\n|\r|)/gm, '').trim().match(/\d+/g).join(''));
     })
-    const description = [];
+    const price = priceList[0];
+
+    // コンテンツのテキスト用
+    const descriptionList = [];
     $('.description').find('*').not('style').eq(0).each((i, x) => {
-      description.push($(x).text().replace(/(\r\n|\n|\r|)/gm, '').trim());
+      descriptionList.push($(x).text().replace(/(\r\n|\n|\r|)/gm, '').trim())
     })
-    const textList = description.filter((x) => x != '');
-    const relation_info = [];
-    $('#relation_info').find('*').not('style').each((i, x) => {
-      relation_info.push($(x).text().replace(/(\r\n|\n|\r|)/gm, '').trim());
-    })
-    const tableList = relation_info.filter((x) => x != '');
+    const description = descriptionList[0].replace(/。/g, '。\n');
+
+    // コンテンツのテーブル用
+    const relationInfoLaw = [];
+    $('#relation_info').eq(1).find('th, td').not('style').each((i, x) => {
+      relationInfoLaw.push($(x).text().replace(/(\r\n|\n|\r|)/gm, '').trim());
+    }).filter((x) => x !== '')
+
+    const relationInfo = [];
+    for (let i = 0; i < relationInfoLaw.length; i += 2) {
+      relationInfo.push([relationInfoLaw[i], relationInfoLaw[i + 1]])
+    }
+    return relationInfo
   })
   .catch(err => console.error(err));
 
+console.log(result)
